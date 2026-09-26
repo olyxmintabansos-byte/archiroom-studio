@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useArchi } from "@/context/ArchiContext";
-import { Compass, Grid, Box, RotateCcw } from "lucide-react";
+import { Compass, Grid, Box, Layers, FileText, RotateCcw } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -12,7 +12,9 @@ export default function Navbar() {
 
   const links = [
     { href: "/", label: "STUDIO CAD DENAH", icon: Grid },
-    { href: "/katalog", label: "KATALOG MODUL RUANG", icon: Box },
+    { href: "/katalog", label: "KATALOG MODUL", icon: Box },
+    { href: "/elevasi", label: "POTONGAN ELEVASI", icon: Layers },
+    { href: "/spesifikasi", label: "SPESIFIKASI & BOQ", icon: FileText },
   ];
 
   return (
@@ -50,17 +52,15 @@ export default function Navbar() {
           </div>
 
           <div>
-            <span className="text-[9px] text-zinc-400 uppercase tracking-wider block">ESTIMASI ANGGARAN:</span>
-            <span className="font-bold">Rp {(kpis.estimatedBuildCostIdr / 1000000000).toFixed(2)} Miliar</span>
+            <span className="text-[9px] text-zinc-400 uppercase tracking-wider block">TOTAL BOQ ANGGARAN:</span>
+            <span className="font-bold">Rp {(kpis.estimatedBuildCostIdr / 1000000000).toFixed(2)} M</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {links.map((link) => {
             const Icon = link.icon;
-            const isActive =
-    pathname === `/archiroom-studio${link.href}` ||
-    pathname === `/archiroom-studio${link.href}/`;
+            const isActive = pathname === link.href || pathname === `${link.href}/`;
             return (
               <Link
                 key={link.href}
@@ -79,7 +79,7 @@ export default function Navbar() {
 
           <button
             onClick={() => {
-              if (confirm("Reset seluruh layout arsitektur ke denah kanonik?")) {
+              if (confirm("Reset seluruh layout dan BoQ arsitektur ke kanonik?")) {
                 resetCadData();
               }
             }}

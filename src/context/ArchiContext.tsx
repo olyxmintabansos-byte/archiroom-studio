@@ -1,10 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { RoomModule, ProjectCad, CadKpi } from "@/types/archi";
+import { RoomModule, WallElevation, BoqMaterialItem, ProjectCad, CadKpi } from "@/types/archi";
 
 interface ArchiContextType {
   rooms: RoomModule[];
+  elevations: WallElevation[];
+  selectedElevationId: string;
+  setSelectedElevationId: (id: string) => void;
+  boqItems: BoqMaterialItem[];
   selectedRoomId: string;
   setSelectedRoomId: (id: string) => void;
   project: ProjectCad;
@@ -17,6 +21,7 @@ interface ArchiContextType {
   updateRoomPosition: (id: string, deltaX: number, deltaY: number) => void;
   rotateRoom: (id: string) => void;
   deleteRoom: (id: string) => void;
+  updateBoqRate: (id: string, newRate: number) => void;
   resetCadData: () => void;
 }
 
@@ -83,6 +88,112 @@ const INITIAL_ROOMS: RoomModule[] = [
   },
 ];
 
+const INITIAL_ELEVATIONS: WallElevation[] = [
+  {
+    id: "ELV-01",
+    wallCode: "WALL-N01",
+    orientation: "TAMPAK UTARA",
+    widthM: 12.0,
+    clearHeightM: 3.6,
+    parapetHeightM: 4.2,
+    openingType: "Frameless Minimal Pivot Glass Door",
+    openingWidthM: 3.0,
+    openingHeightM: 3.0,
+    sillHeightM: 0.0,
+    wallStructure: "Exposed Board-Formed Reinforced Concrete (200mm)",
+    finishLayer: "Hydrophobic Matte Silane Impregnation",
+    hatchPattern: "CONCRETE_DENSE",
+  },
+  {
+    id: "ELV-02",
+    wallCode: "WALL-S02",
+    orientation: "TAMPAK SELATAN",
+    widthM: 10.0,
+    clearHeightM: 3.6,
+    parapetHeightM: 4.2,
+    openingType: "Continuous Linear Clerestory Ribbon Window",
+    openingWidthM: 8.0,
+    openingHeightM: 0.8,
+    sillHeightM: 2.6,
+    wallStructure: "Precision Aerated Autoclaved Concrete (150mm)",
+    finishLayer: "Ultra-White Mineral Silicate Plaster",
+    hatchPattern: "LIGHT_BRICK",
+  },
+  {
+    id: "ELV-03",
+    wallCode: "SECT-A01",
+    orientation: "POTONGAN A-A",
+    widthM: 14.0,
+    clearHeightM: 3.8,
+    parapetHeightM: 4.5,
+    openingType: "Central Courtyard Full-Height Glazed Facade",
+    openingWidthM: 4.0,
+    openingHeightM: 3.6,
+    sillHeightM: 0.0,
+    wallStructure: "Dual Layer Concrete Cavity Wall with Thermal Core",
+    finishLayer: "Exposed Cast Concrete & Shadow Gap Reveal",
+    hatchPattern: "CONCRETE_DENSE",
+  },
+];
+
+const INITIAL_BOQ: BoqMaterialItem[] = [
+  {
+    id: "BOQ-01",
+    divisionCode: "DIV-03",
+    category: "STRUKTUR BETON MONOLITIK",
+    itemDescription: "Beton Bertulang K-350 Board-Formed Architectural Finish",
+    specification: "Semen Portland Tipe 1 dengan bekisting kayu pinus garis serat vertikal tajam.",
+    unit: "m³",
+    quantity: 142,
+    unitRateIdr: 2850000,
+    totalPriceIdr: 404700000,
+  },
+  {
+    id: "BOQ-02",
+    divisionCode: "DIV-08",
+    category: "PINTU & BUKAAN MINIMALIS",
+    itemDescription: "Kaca Struktural Low-Iron Frameless 12mm Tempered Laminated",
+    specification: "Transmisi cahaya 91%, invisible floor pivot bearing Dorma RTS-85.",
+    unit: "m²",
+    quantity: 68,
+    unitRateIdr: 3400000,
+    totalPriceIdr: 231200000,
+  },
+  {
+    id: "BOQ-03",
+    divisionCode: "DIV-09",
+    category: "FINISHING LANTAI MONOKROM",
+    itemDescription: "Monolithic Honed Concrete Floor dengan Densifier Lithium",
+    specification: "Grinding grit 800 satin sheen, sambungan dilatasi sealant hitam 3mm.",
+    unit: "m²",
+    quantity: 119,
+    unitRateIdr: 950000,
+    totalPriceIdr: 113050000,
+  },
+  {
+    id: "BOQ-04",
+    divisionCode: "DIV-09",
+    category: "FINISHING DINDING INTERIOR",
+    itemDescription: "Pelapis Dinding Mineral Silikat Matte Ultra-White",
+    specification: "Zero VOC, formula kapur murni Keim Innostar tanpa pigmen buatan.",
+    unit: "m²",
+    quantity: 340,
+    unitRateIdr: 280000,
+    totalPriceIdr: 95200000,
+  },
+  {
+    id: "BOQ-05",
+    divisionCode: "DIV-07",
+    category: "THERMAL & WATERPROOFING",
+    itemDescription: "Membran Waterproofing Poliuretan Elastomerik Atap Datar",
+    specification: "Ketebalan kering 2.0mm tahan genangan air terus-menerus.",
+    unit: "m²",
+    quantity: 160,
+    unitRateIdr: 450000,
+    totalPriceIdr: 72000000,
+  },
+];
+
 const INITIAL_PROJECT: ProjectCad = {
   projectId: "ARC-2026-029",
   projectName: "RESIDENCE OF PURE VOID & SILENCE",
@@ -99,6 +210,9 @@ const ArchiContext = createContext<ArchiContextType | undefined>(undefined);
 
 export function ArchiProvider({ children }: { children: React.ReactNode }) {
   const [rooms, setRooms] = useState<RoomModule[]>(INITIAL_ROOMS);
+  const [elevations] = useState<WallElevation[]>(INITIAL_ELEVATIONS);
+  const [selectedElevationId, setSelectedElevationId] = useState<string>("ELV-01");
+  const [boqItems, setBoqItems] = useState<BoqMaterialItem[]>(INITIAL_BOQ);
   const [selectedRoomId, setSelectedRoomId] = useState<string>("RM-01");
   const [project] = useState<ProjectCad>(INITIAL_PROJECT);
   const [gridSnap, setGridSnap] = useState<boolean>(true);
@@ -107,15 +221,18 @@ export function ArchiProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("archiroom_rooms");
+      const savedBoq = localStorage.getItem("archiroom_boq");
       if (saved) setRooms(JSON.parse(saved));
+      if (savedBoq) setBoqItems(JSON.parse(savedBoq));
     } catch {}
   }, []);
 
   useEffect(() => {
     try {
       localStorage.setItem("archiroom_rooms", JSON.stringify(rooms));
+      localStorage.setItem("archiroom_boq", JSON.stringify(boqItems));
     } catch {}
-  }, [rooms]);
+  }, [rooms, boqItems]);
 
   const addRoom = (template: Omit<RoomModule, "id">) => {
     const newId = `RM-${String(rooms.length + 1).padStart(2, "0")}`;
@@ -160,10 +277,27 @@ export function ArchiProvider({ children }: { children: React.ReactNode }) {
     setSelectedRoomId(rooms[0]?.id || "");
   };
 
+  const updateBoqRate = (id: string, newRate: number) => {
+    setBoqItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              unitRateIdr: newRate,
+              totalPriceIdr: Math.round(item.quantity * newRate),
+            }
+          : item
+      )
+    );
+  };
+
   const resetCadData = () => {
     setRooms(INITIAL_ROOMS);
+    setBoqItems(INITIAL_BOQ);
     setSelectedRoomId("RM-01");
+    setSelectedElevationId("ELV-01");
     localStorage.removeItem("archiroom_rooms");
+    localStorage.removeItem("archiroom_boq");
   };
 
   const totalFloorArea = rooms
@@ -176,19 +310,24 @@ export function ArchiProvider({ children }: { children: React.ReactNode }) {
 
   const siteArea = project.plotWidthM * project.plotLengthM;
   const kdbPct = Math.round((totalFloorArea / siteArea) * 1000) / 10;
+  const totalBoqCost = boqItems.reduce((sum, b) => sum + b.totalPriceIdr, 0);
 
   const kpis: CadKpi = {
     totalFloorAreaSqm: totalFloorArea,
     builtCoveragePct: kdbPct,
     roomCount: rooms.length,
     courtyardVoidAreaSqm: voidArea,
-    estimatedBuildCostIdr: totalFloorArea * 9500000,
+    estimatedBuildCostIdr: totalBoqCost,
   };
 
   return (
     <ArchiContext.Provider
       value={{
         rooms,
+        elevations,
+        selectedElevationId,
+        setSelectedElevationId,
+        boqItems,
         selectedRoomId,
         setSelectedRoomId,
         project,
@@ -201,6 +340,7 @@ export function ArchiProvider({ children }: { children: React.ReactNode }) {
         updateRoomPosition,
         rotateRoom,
         deleteRoom,
+        updateBoqRate,
         resetCadData,
       }}
     >
