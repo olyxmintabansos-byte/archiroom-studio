@@ -58,7 +58,9 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           {links.map((link) => {
             const Icon = link.icon;
-            const isActive = pathname === link.href;
+            const isActive =
+    pathname === `/archiroom-studio${link.href}` ||
+    pathname === `/archiroom-studio${link.href}/`;
             return (
               <Link
                 key={link.href}

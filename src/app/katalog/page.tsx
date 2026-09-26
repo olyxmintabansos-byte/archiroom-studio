@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { useArchi } from "@/context/ArchiContext";
-import { Box, Search, Filter, Check, ArrowRight } from "lucide-react";
+import { Search } from "lucide-react";
 
 export default function CatalogPage() {
   const { rooms } = useArchi();
